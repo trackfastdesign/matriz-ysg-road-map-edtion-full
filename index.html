@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz de Priorização - 60 Projetos</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#0f172a; color:#e2e8f0; padding:20px; min-height:100vh; }
+  button,input,select,textarea { font:inherit; }
+  button { cursor:pointer; }
+  button:focus-visible,select:focus-visible,input:focus-visible,[contenteditable]:focus-visible { outline:2px solid #38bdf8; outline-offset:3px; }
+  h1 { text-align:center; font-size:1.8em; margin-bottom:8px; background:linear-gradient(90deg,#38bdf8,#818cf8,#c084fc); background-clip:text; -webkit-background-clip:text; color:transparent; }
+  .subtitle { text-align:center; color:#94a3b8; margin-bottom:24px; font-size:.95em; }
+  .download-bar { max-width:1200px; margin:0 auto 24px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+  .download-bar button { padding:10px 16px; border:none; border-radius:10px; font-weight:700; font-size:.82em; transition:transform .2s; }
+  .download-bar button:hover { transform:translateY(-2px); }
+  .btn-json { background:#6366f1; color:white; }
+  .btn-csv { background:#10b981; color:#064e3b; }
+  .btn-html { background:#f59e0b; color:#78350f; }
+  .btn-txt { background:#f43f5e; color:white; }
+  .btn-neutral { background:#334155; color:#e2e8f0; }
+  .storage-note { max-width:1200px; margin:0 auto 22px; font-size:.78em; color:#94a3b8; text-align:right; }
+  .matrix { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:1200px; margin:0 auto 40px; }
+  .module {
+    --bg1:#1e293b; --bg2:#1e293b; --accent:#6366f1; --text:#e2e8f0; --muted:#94a3b8;
+    color:var(--text);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    border:1px solid var(--accent);
+    border-radius:16px; position:relative; min-width:0;
+  }
+  .quadrant { padding:24px; }
+  .q-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .q-header h2 { font-size:1.15em; margin-bottom:6px; }
+  .q-header .emoji { font-size:1.6em; }
+  .q-header>div { flex:1; min-width:0; }
+  .q-badge { display:inline-block; font-size:.7em; padding:3px 10px; border-radius:20px; font-weight:600; background:var(--accent); color:var(--bg2); }
+  .q-desc { font-size:.82em; color:var(--muted); margin-bottom:14px; line-height:1.5; }
+  .project-list { list-style:none; }
+  .project-list li { padding:8px 12px; margin-bottom:6px; background:rgba(0,0,0,.25); border-radius:8px; font-size:.85em; display:flex; align-items:center; gap:8px; transition:transform .2s; }
+  .project-list li:hover { transform:translateX(4px); }
+  .project-num { font-weight:700; color:var(--muted); min-width:28px; }
+  .project-name { flex:1; min-width:0; }
+  .timeline { max-width:1200px; margin:0 auto 40px; padding:0; border-color:transparent; }
+  .timeline>h2 { text-align:center; font-size:1.4em; margin-bottom:24px; color:var(--accent); }
+  .phases { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .phase { border-radius:14px; padding:20px; border:0; border-top:4px solid var(--accent); }
+  .phase h3 { font-size:.95em; margin-bottom:4px; }
+  .phase .period { font-size:.78em; color:var(--muted); margin-bottom:12px; }
+  .phase .count { font-size:2em; font-weight:800; }
+  .phase .label { font-size:.75em; color:var(--muted); }
+  .scoring { max-width:1200px; margin:0 auto 40px; padding:28px; border-color:transparent; }
+  .scoring>h2 { font-size:1.3em; margin-bottom:20px; color:var(--accent); text-align:center; }
+  .table-scroll { overflow-x:auto; }
+  .score-table { width:100%; border-collapse:collapse; }
+  .score-table th { text-align:left; padding:10px 14px; background:rgba(148,163,184,.16); font-size:.82em; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .score-table th:first-child { border-radius:8px 0 0 8px; }
+  .score-table th:last-child { border-radius:0 8px 8px 0; }
+  .score-table td { padding:10px 14px; font-size:.85em; border-bottom:1px solid rgba(148,163,184,.2); }
+  .score-table tr:hover td { background:rgba(255,255,255,.03); }
+  .score-bar { height:8px; border-radius:4px; background:#334155; min-width:100px; }
+  .score-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),#34d399); transition:width .4s; }
+  .tip-box { border-radius:14px; padding:24px; max-width:1200px; margin:0 auto 40px; }
+  .tip-box>h2 { color:var(--accent); margin-bottom:16px; font-size:1.2em; }
+  .tip-box ul { list-style:none; }
+  .tip-box li { padding:8px 0; font-size:.9em; line-height:1.6; border-bottom:1px solid rgba(99,102,241,.2); display:flex; align-items:center; gap:8px; }
+  .tip-box li:last-child { border:none; }
+  .tip-icon { color:var(--accent); }
+  .tip-text { flex:1; }
+  .custom-board { max-width:1200px; margin:0 auto 40px; }
+  .custom-board>h2 { padding:24px 24px 0; color:var(--accent); }
+  .board-grid { display:grid; grid-template-columns:repeat(2,1fr); padding:24px; gap:16px; }
+  .extra-line { padding:8px 10px; margin:8px 0; background:rgba(0,0,0,.16); border-radius:8px; line-height:1.5; }
+  .editable { position:relative; overflow-wrap:anywhere; }
+  .editable:not(tr) { padding-right:64px; }
+  .editable .edit-btn {
+    position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    background:#6366f1; color:#fff; border:none; border-radius:6px;
+    padding:4px 9px; font-size:11px; font-weight:700; letter-spacing:.4px;
+    opacity:0; transition:opacity .2s; white-space:nowrap;
+  }
+  .editable:hover>.edit-btn,.editable:focus-within>.edit-btn { opacity:1; }
+  .edit-btn:hover { background:#818cf8; }
+  .table-edit { border:0; background:#6366f1; color:white; border-radius:6px; padding:4px 9px; font-size:11px; opacity:0; }
+  tr:hover .table-edit,tr:focus-within .table-edit { opacity:1; }
+  .module-footer { display:flex; gap:6px; flex-wrap:wrap; padding-top:14px; margin-top:16px; border-top:1px solid rgba(148,163,184,.22); }
+  .module-footer button { border:1px solid rgba(148,163,184,.28); background:rgba(15,23,42,.55); color:var(--text); padding:7px 9px; border-radius:7px; font-size:11px; font-weight:600; }
+  .module-footer button:hover { border-color:var(--accent); background:rgba(15,23,42,.85); }
+  .timeline>.module-footer,.custom-board>.module-footer { margin:16px 20px 20px; }
+  .color-hover { position:absolute; right:8px; top:8px; z-index:2; opacity:0; border:1px solid var(--accent); border-radius:7px; padding:5px 8px; background:#0f172a; color:white; font-size:11px; }
+  .module:hover>.color-hover,.module:focus-within>.color-hover { opacity:1; }
+  dialog { width:min(850px,94vw); max-height:88vh; overflow:auto; border:2px solid var(--accent,#6366f1); border-radius:16px; background:linear-gradient(135deg,var(--bg1,#1e293b),var(--bg2,#1e293b)); color:var(--text,#e2e8f0); padding:26px; margin:auto; box-shadow:0 22px 80px #0008; }
+  dialog[open] { animation:zoomIn .22s ease; }
+  dialog::backdrop { background:rgba(0,0,0,.75); backdrop-filter:blur(6px); }
+  @keyframes zoomIn { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .dialog-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+  .dialog-heading h3 { font-size:1.05em; }
+  .close-btn { border:0; background:transparent; color:inherit; font-size:1.6em; padding:0 5px; }
+  .editor-hint { font-size:.8em; color:var(--muted,#94a3b8); margin-bottom:18px; line-height:1.6; }
+  .zoom-cut { border:1px solid var(--accent,#6366f1); border-radius:10px; background:rgba(0,0,0,.2); padding:20px; font-size:1.2em; overflow-x:auto; }
+  .zoom-cut .editable { padding-right:0; transform:none; }
+  .zoom-cut [contenteditable] { display:inline-block; white-space:pre-wrap; min-width:1ch; min-height:1.2em; border-bottom:1px dashed var(--accent,#6366f1); cursor:text; }
+  .zoom-cut [contenteditable]:focus { background:rgba(255,255,255,.08); outline:1px solid var(--accent,#6366f1); outline-offset:4px; border-radius:3px; }
+  .zoom-cut h1 [contenteditable] { color:#a5b4fc; }
+  .zoom-cut table { min-width:650px; }
+  .modal-actions { display:flex; gap:12px; justify-content:flex-end; margin-top:22px; flex-wrap:wrap; }
+  .modal-actions button { border:none; border-radius:9px; padding:10px 18px; font-weight:700; }
+  .btn-save { background:#10b981; color:#064e3b; }
+  .btn-cancel { background:#334155; color:#e2e8f0; }
+  .dialog-error { color:#fda4af; margin-top:12px; font-size:.85em; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-field { display:flex; flex-direction:column; gap:7px; font-size:.85em; }
+  .form-field input:not([type=color]),.form-field select { background:#0f172a; color:#e2e8f0; border:1px solid #475569; padding:10px; border-radius:7px; width:100%; }
+  input[type=color] { width:100%; height:42px; background:transparent; border:1px solid #475569; border-radius:7px; }
+  .toast { position:fixed; bottom:24px; right:24px; background:#10b981; color:#064e3b; padding:14px 20px; border-radius:10px; font-size:.85em; font-weight:700; z-index:2000; opacity:0; transition:opacity .2s; pointer-events:none; max-width:90vw; }
+  .toast.show { opacity:1; }
+  @media (max-width:768px) {
+    body { padding:12px; }
+    .matrix,.phases,.board-grid,.form-grid { grid-template-columns:1fr; }
+    .download-bar { justify-content:center; }
+    .scoring { padding:18px; }
+    dialog { padding:18px; }
+    .storage-note { text-align:center; }
+  }
+  @media (hover:none) {
+    .editable .edit-btn,.table-edit,.color-hover { opacity:1; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    * { animation:none!important; transition:none!important; }
+  }
+</style>
+</head>
+<body>
+<header id="page-header"></header>
+<nav class="download-bar" aria-label="Exportar e importar">
+  <button class="btn-json" data-export="json">⬇ JSON</button>
+  <button class="btn-csv" data-export="csv">⬇ CSV</button>
+  <button class="btn-html" data-export="html">⬇ HTML editável</button>
+  <button class="btn-txt" data-export="txt">⬇ TXT</button>
+  <button class="btn-neutral" id="import-btn">↥ Importar JSON</button>
+  <button class="btn-neutral" id="global-add">＋ Módulo / quadro</button>
+</nav>
+<p class="storage-note" id="storage-note">Alterações salvas neste navegador. Baixe JSON ou HTML para manter uma cópia.</p>
+<main id="site"></main>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<dialog id="editor" aria-labelledby="dialog-title">
+  <div class="dialog-heading">
+    <h3 id="dialog-title">Editar linha</h3>
+    <button class="close-btn" aria-label="Fechar">×</button>
+  </div>
+  <div id="dialog-body"></div>
+  <p class="dialog-error" id="dialog-error" role="alert"></p>
+  <div class="modal-actions">
+    <button class="btn-cancel" id="cancel-btn">Cancelar</button>
+    <button class="btn-save" id="save-btn">💾 Salvar</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script id="embedded-state" type="application/json">null</script>
+<script>
+(() => {
+  'use strict';
+
+  const uid = () => 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
+  const palette = (bg1,bg2,accent,muted='#94a3b8') =>
+    ({bg1,bg2,accent,text:'#e2e8f0',muted});
+  const themes = [
+    palette('#065f46','#064e3b','#10b981','#cbd5e1'),
+    palette('#1e3a5f','#172554','#3b82f6','#cbd5e1'),
+    palette('#713f12','#78350f','#f59e0b','#cbd5e1'),
+    palette('#4c1d2e','#4c0519','#f43f5e','#cbd5e1')
+  ];
+  const groups = [
+    [[47,'Manual Estratégico OKRs 2026'],[46,'YACO CRM Sponsorship Manager'],[39,'Painel Estratégico de Agências'],[10,'ACTION HISTORY Flipbook Podcast'],[55,'TUTORIALS TODAY 77'],[56,'Instant Format Presentations'],[3,'YSBrain Business Model'],[59,'Gain Format (Financeiro)'],[24,'Coach/Podcast'],[14,'Santa Clara Digital Bookstore']],
+    [[4,'APP Ant-Panic'],[17,'Data Research Solutions Metropolis'],[36,'Advanced AR Solutions Partners'],[12,'STUDO TODAY 7 AR/VR'],[43,'MediaStudio Pro'],[52,'Holistic 3D Corporate / Interative'],[49,'Projeto História do Líbano'],[41,'Lebanese Food Delivery'],[18,'Grupo Vatejo Brasil'],[54,'Kobe Memorial Streaming'],[38,'Gemini Voice & Text'],[7,'Track Fast Design'],[60,'Upper Boost Edit'],[11,'Security Man'],[44,'After Compliance']],
+    [[6,'TVPEFORM EXPRESS'],[8,'TENDERAH'],[13,'Toros Design'],[16,'SICLASMARTER'],[28,'Transport Case / Wave'],[29,'Sevtor Datafile Model'],[37,'Rosa Chá Renaissance Swimwear'],[42,'Spark Builder'],[48,'Audit Mobil 77'],[50,'Booble Sector Datafile'],[51,'NFTs / E-mail MKT YCJF'],[53,'Plebiscito'],[57,'Aposta'],[58,'Green Portrait More Docs Plus'],[25,'Fabrics']],
+    [[1,'YACOIOEF'],[2,'Time to Beep Click'],[5,'SINTONENYY'],[9,'AETOEF_T'],[15,'2PN'],[19,'Buindfold Blindlys'],[20,'Martial_Ark'],[21,'Mogs'],[22,'gayAPMAE>NOM'],[23,'Music The Turn / Face Turn'],[26,'MIAD'],[27,'carFORDEND'],[30,'Sala THS'],[31,'TV Dark SAIUI'],[32,'River Silence / Rid Azul'],[33,'Tasks Short One'],[34,'Clarensse / Clareense'],[35,'Drop Set Fast Sit'],[40,'Do-Chilling-Time'],[45,'4U']]
+  ];
+  const titles = ['FAZER AGORA','PLANEJAR & AGENDAR','INCUBAR & VALIDAR','BACKLOG / REAVALIAR'];
+  const descriptions = [
+    'Alto impacto + Alta facilidade. São seus "quick wins" estratégicos. Comece por aqui!',
+    'Alto impacto, mas exige mais recursos/tempo. Planeje sprints dedicados.',
+    'Potencial interessante, mas precisa de validação. Crie MVPs antes de investir.',
+    'Ideias em estágio inicial. Guardar, mas não investir energia agora.'
+  ];
+  const scores = [
+    [47,'Manual OKRs 2026',5,5,4],[46,'YACO CRM',5,4,4],
+    [39,'Painel Agências',5,4,4],[10,'ACTION HISTORY Podcast',4,5,4],
+    [55,'Tutorials Today 77',4,4,5],[3,'YSBrain',5,4,3],
+    [56,'Instant Presentations',4,4,4],[59,'Gain Format',5,3,4],
+    [24,'Coach/Podcast',4,4,4],[14,'Santa Clara Bookstore',4,4,4]
+  ];
+  function initialState() {
+    return {
+      version:1,
+      storageId:uid(),
+      page:{
+        title:'🎯 Matriz de Priorização — 60 Projetos',
+        subtitle:'Framework ICE adaptado · Impacto × Confiança × Facilidade · Clique em EDIT para editar qualquer linha'
+      },
+      sections:[
+        {id:uid(),type:'matrix',modules:groups.map((g,i)=>({
+          id:uid(),type:'list',title:titles[i],emoji:['🚀','📋','💡','📦'][i],
+          badge:['Score 4.0–5.0','Score 3.0–3.9','Score 2.0–2.9','Score 1.0–1.9'][i],
+          description:descriptions[i],colors:{...themes[i]},
+          rows:g.map(([num,name])=>({num:String(num),name})),extra:[]
+        }))},
+        {id:uid(),type:'timeline',title:'📅 Roadmap de Execução Sugerido',
+          colors:palette('#0f172a','#0f172a','#c084fc'),extra:[],
+          modules:[
+            ['🟢 Fase 1','Nov–Dez 2026','10','projetos "Quick Wins"'],
+            ['🔵 Fase 2','Jan–Mar 2027','15','projetos planejados'],
+            ['🟡 Fase 3','Abr–Jul 2027','15','projetos em validação'],
+            ['🔴 Fase 4','Ago 2027+','20','backlog p/ reavaliação']
+          ].map((p,i)=>({id:uid(),type:'phase',title:p[0],period:p[1],
+            count:p[2],label:p[3],colors:palette('#1e293b','#1e293b',themes[i].accent),extra:[]}))
+        },
+        {id:uid(),type:'table',title:'📊 Exemplo de Scoring ICE — Top 10 Prioritários',
+          colors:palette('#1e293b','#1e293b','#38bdf8'),
+          headers:['#','Projeto','Impacto','Confiança','Facilidade','Score','Visual'],
+          rows:scores.map(([num,name,imp,conf,fac])=>({
+            num:String(num),name,imp,conf,fac,scoreOverride:'',visualOverride:''
+          })),extra:[]},
+        {id:uid(),type:'tips',title:'💎 Regras de Ouro para 60 Projetos',
+          colors:palette('#1e1b4b','#312e81','#a5b4fc'),extra:[],
+          rows:[
+            {lead:'Regra 3-3-3:',text:' No máximo 3 projetos ativos, 3 em planejamento e 3 em validação simultâneos'},
+            {lead:'Kill Criteria:',text:' Se em 30 dias um projeto não avançou, mova para o backlog sem culpa'},
+            {lead:'Agrupamento:',text:' Projetos similares (ex: #29 + #50 Datafile) podem virar UM SÓ projeto'},
+            {lead:'Review Mensal:',text:' Todo dia 1º, reavalie scores — o mercado muda, suas prioridades também'},
+            {lead:'Energia Finita:',text:' 60 ideias ≠ 60 execuções. Os melhores empreendedores dizem NÃO para 90%'},
+            {lead:'MVP First:',text:' Antes de construir, valide com uma landing page simples ou formulário'}
+          ]}
+      ]
+    };
+  }
+
+  let state;
+  try { state=JSON.parse(document.getElementById('embedded-state').textContent); } catch {}
+  if (!state) state=initialState();
+  // O arquivo HTML exportado usa seu próprio namespace de armazenamento.
+  const storageKey=()=> 'priority-editor-v1-' + state.storageId;
+  try {
+    const saved=localStorage.getItem(storageKey());
+    if(saved) { const parsed=JSON.parse(saved); validateState(parsed); state=parsed; }
+  } catch {}
+  let refs=[], activeSave=null, previousFocus=null, toastTimer;
+  const site=document.getElementById('site');
+  const dialog=document.getElementById('editor');
+  const dialogBody=document.getElementById('dialog-body');
+  const error=document.getElementById('dialog-error');
+
+  function el(tag,className,text) {
+    const node=document.createElement(tag);
+    if(className) node.className=className;
+    if(text!==undefined) node.textContent=text;
+    return node;
+  }
+  function button(text,fn,className='') {
+    const b=el('button',className,text); b.type='button'; b.addEventListener('click',fn); return b;
+  }
+  function setTheme(node,colors) {
+    for(const [key,value] of Object.entries(colors||{})) {
+      if(/^#[0-9a-f]{6}$/i.test(value)) node.style.setProperty('--'+key,value);
+    }
+  }
+  // Os dados do usuário entram apenas como texto, nunca como HTML.
+  function field(object,key,className='',options={}) {
+    const span=el('span',className,options.display!==undefined?options.display:object[key]);
+    span.dataset.ref=String(refs.length);
+    refs.push({object,key,...options});
+    return span;
+  }
+  function editable(node,module) {
+    node.classList.add('editable');
+    node.append(button('EDIT',()=>editLine(node,module),'edit-btn'));
+    return node;
+  }
+  function line(tag,object,key,module,className='',options={}) {
+    const node=el(tag,className); node.append(field(object,key,'',options)); return editable(node,module);
+  }
+  function moduleShell(module,className) {
+    const node=el('section','module '+className);
+    node.dataset.moduleId=module.id;
+    setTheme(node,module.colors);
+    node.append(button('🎨 COR',()=>editColors(module),'color-hover'));
+    return node;
+  }
+  function footer(module) {
+    const bar=el('div','module-footer');
+    bar.append(
+      button('🎨 Cores',()=>editColors(module)),
+      button('⬇ Baixar',()=>downloadMenu(module)),
+      button('＋ Módulo',()=>creationMenu(module,false)),
+      button('＋ Linha',()=>addLine(module)),
+      button('＋ Quadro',()=>creationMenu(module,true))
+    );
+    return bar;
+  }
+  function extras(module,node) {
+    (module.extra||[]).forEach(row=>node.append(line('p',row,'text',module,'extra-line')));
+  }
+  function scoreValue(row) {
+    return row.scoreOverride!=='' ? Number(row.scoreOverride) : (row.imp+row.conf+row.fac)/3;
+  }
+  function visualValue(row) {
+    return row.visualOverride!=='' ? Number(row.visualOverride) : scoreValue(row)/5*100;
+  }
+
+  function renderList(m) {
+    const n=moduleShell(m,'quadrant');
+    const head=el('div','q-header');
+    head.append(line('span',m,'emoji',m,'emoji'));
+    const text=el('div');
+    text.append(line('h2',m,'title',m),line('span',m,'badge',m,'q-badge'));
+    head.append(text);
+    n.append(head,line('p',m,'description',m,'q-desc'));
+    const ul=el('ul','project-list');
+    m.rows.forEach(r=>{
+      const li=el('li');
+      const num=el('span','project-num'); num.append('#',field(r,'num'));
+      li.append(num,field(r,'name','project-name'));
+      ul.append(editable(li,m));
+    });
+    n.append(ul); extras(m,n); n.append(footer(m)); return n;
+  }
+  function renderPhase(m) {
+    const n=moduleShell(m,'phase');
+    n.append(line('h3',m,'title',m),line('p',m,'period',m,'period'),
+      line('div',m,'count',m,'count'),line('div',m,'label',m,'label'));
+    extras(m,n); n.append(footer(m)); return n;
+  }
+  function renderTable(m) {
+    const n=moduleShell(m,'scoring');
+    n.append(line('h2',m,'title',m));
+    const scroll=el('div','table-scroll');
+    const table=el('table','score-table');
+    const thead=el('thead'),hr=el('tr');
+    m.headers.forEach((_,i)=>hr.append(line('th',m.headers,i,m)));
+    hr.append(el('th'));
+    thead.append(hr);
+    const tbody=el('tbody');
+    m.rows.forEach(r=>{
+      const tr=el('tr','editable');
+      [
+        ['num',{}],['name',{}],
+        ['imp',{numeric:true,min:1,max:5}],
+        ['conf',{numeric:true,min:1,max:5}],
+        ['fac',{numeric:true,min:1,max:5}]
+      ].forEach(([key,opts])=>{
+        const td=el('td'); td.append(field(r,key,'',opts)); tr.append(td);
+      });
+      const tdScore=el('td');
+      tdScore.append(field(r,'scoreOverride','',{
+        display:scoreValue(r).toFixed(1),numeric:true,min:1,max:5,optional:true,
+        editValue:r.scoreOverride
+      }));
+      tr.append(tdScore);
+      const visual=el('td');
+      const bar=el('div','score-bar'),fill=el('div','score-fill');
+      fill.style.width=visualValue(r)+'%'; bar.append(fill); visual.append(bar);
+      tr.append(visual);
+      const action=el('td');
+      action.append(button('EDIT',()=>editLine(tr,m),'table-edit'));
+      tr.append(action); tbody.append(tr);
+    });
+    table.append(thead,tbody); scroll.append(table); n.append(scroll);
+    extras(m,n); n.append(footer(m)); return n;
+  }
+  function renderTips(m) {
+    const n=moduleShell(m,'tip-box');
+    n.append(line('h2',m,'title',m));
+    const ul=el('ul');
+    m.rows.forEach(r=>{
+      const li=el('li'),text=el('span','tip-text');
+      const strong=el('strong'); strong.append(field(r,'lead'));
+      text.append(strong,field(r,'text'));
+      li.append(el('span','tip-icon','✦'),text); ul.append(editable(li,m));
+    });
+    n.append(ul); extras(m,n); n.append(footer(m)); return n;
+  }
+  function renderBoard(m) {
+    const timeline=m.type==='timeline';
+    const n=moduleShell(m,timeline?'timeline':'custom-board');
+    n.append(line('h2',m,'title',m));
+    const grid=el('div',timeline?'phases':'board-grid');
+    m.modules.forEach(child=>grid.append(renderModule(child)));
+    n.append(grid); extras(m,n); n.append(footer(m)); return n;
+  }
+  function renderModule(m) {
+    if(m.type==='list') return renderList(m);
+    if(m.type==='phase') return renderPhase(m);
+    if(m.type==='table') return renderTable(m);
+    if(m.type==='tips') return renderTips(m);
+    return renderBoard(m);
+  }
+  function render() {
+    refs=[];
+    const header=document.getElementById('page-header'); header.replaceChildren();
+    header.append(line('h1',state.page,'title',null),line('p',state.page,'subtitle',null,'subtitle'));
+    document.title=state.page.title;
+    site.replaceChildren();
+    state.sections.forEach(s=>{
+      if(s.type==='matrix') {
+        const grid=el('div','matrix');
+        s.modules.forEach(m=>grid.append(renderModule(m))); site.append(grid);
+      } else site.append(renderModule(s));
+    });
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(storageKey(),JSON.stringify(state));
+      document.getElementById('storage-note').textContent=
+        'Alterações salvas neste navegador. Baixe JSON ou HTML para manter uma cópia.';
+    } catch {
+      document.getElementById('storage-note').textContent=
+        'Armazenamento local indisponível. Baixe JSON ou HTML para guardar as alterações.';
+    }
+  }
+  function toast(message) {
+    const t=document.getElementById('toast');
+    clearTimeout(toastTimer); t.textContent=message; t.classList.add('show');
+    toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+  }
+  function commit() { persist(); render(); toast('✅ Alterações salvas'); }
+  function openDialog(title,module,save) {
+    previousFocus=document.activeElement;
+    dialog.removeAttribute('style');
+    setTheme(dialog,module?.colors||palette('#1e293b','#1e293b','#6366f1'));
+    document.getElementById('dialog-title').textContent=title;
+    error.textContent=''; activeSave=save;
+    document.getElementById('save-btn').hidden=!save;
+    document.getElementById('cancel-btn').textContent=save?'Cancelar':'Fechar';
+    dialog.showModal();
+    requestAnimationFrame(()=>{
+      const first=dialogBody.querySelector('[contenteditable],input,select,button');
+      if(first) first.focus();
+    });
+  }
+  function closeDialog() { dialog.close(); activeSave=null; }
+  dialog.querySelector('.close-btn').addEventListener('click',closeDialog);
+  document.getElementById('cancel-btn').addEventListener('click',closeDialog);
+  dialog.addEventListener('close',()=>{
+    if(previousFocus?.isConnected) previousFocus.focus();
+  });
+  document.getElementById('save-btn').addEventListener('click',()=>{
+    if(!activeSave) return;
+    try { activeSave(); } catch(e) { error.textContent=e.message; }
+  });
+  dialog.addEventListener('click',e=>{
+    if(e.target!==dialog) return;
+    const r=dialog.getBoundingClientRect();
+    if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) closeDialog();
+  });
+  dialog.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&activeSave) {
+      e.preventDefault(); document.getElementById('save-btn').click();
+    }
+  });
+
+  function editLine(source,module) {
+    dialogBody.replaceChildren();
+    dialogBody.append(el('p','editor-hint',
+      'Clique nos textos sublinhados para editar. Salve com o botão abaixo ou Ctrl/Cmd + Enter. Esc cancela.'));
+    const cut=el('div','zoom-cut');
+    setTheme(cut,module?.colors);
+    const clone=source.cloneNode(true);
+    clone.querySelectorAll('button').forEach(b=>b.remove());
+    const clonedFields=[...clone.querySelectorAll('[data-ref]')];
+    const edits=clonedFields.map(span=>{
+      const ref=refs[Number(span.dataset.ref)];
+      if(ref.editValue!==undefined) span.textContent=ref.editValue;
+      span.contentEditable='true';
+      span.setAttribute('role','textbox');
+      span.setAttribute('aria-label','Editar '+String(ref.key));
+      span.spellcheck=true;
+      // Cola somente texto: impede HTML executável e formatação acidental.
+      span.addEventListener('paste',e=>{
+        e.preventDefault();
+        const text=e.clipboardData.getData('text/plain');
+        const selection=window.getSelection();
+        if(selection.rangeCount) {
+          const range=selection.getRangeAt(0); range.deleteContents();
+          const node=document.createTextNode(text); range.insertNode(node);
+          range.setStartAfter(node); range.collapse(true);
+          selection.removeAllRanges(); selection.addRange(range);
+        }
+      });
+      return {span,ref};
+    });
+    if(source.tagName==='TR') {
+      const table=el('table','score-table'),tbody=el('tbody');
+      tbody.append(clone); table.append(tbody); cut.append(table);
+      dialogBody.append(el('p','editor-hint',
+        'Impacto, confiança e facilidade: 1 a 5. O campo Score vazio usa a média automática; preenchê-lo define um valor manual.'));
+    } else if(source.tagName==='TH') {
+      const table=el('table','score-table'),head=el('thead'),row=el('tr');
+      row.append(clone); head.append(row); table.append(head); cut.append(table);
+    } else cut.append(clone);
+    dialogBody.append(cut);
+    openDialog('✎ Editar linha em destaque',module,()=>{
+      const values=edits.map(({span,ref})=>{
+        let value=span.innerText.replace(/\r/g,'');
+        if(ref.numeric) {
+          value=value.trim();
+          if(ref.optional&&value==='') return '';
+          const number=Number(value.replace(',','.'));
+          if(!value||!Number.isFinite(number)||number<ref.min||number>ref.max)
+            throw new Error('Informe um número entre '+ref.min+' e '+ref.max+' em '+ref.key+'.');
+          return number;
+        }
+        return value;
+      });
+      edits.forEach(({ref},i)=>ref.object[ref.key]=values[i]);
+      closeDialog(); commit();
+    });
+  }
+
+  function formField(label,type,value) {
+    const wrap=el('label','form-field',label);
+    const input=el(type==='select'?'select':'input');
+    if(type!=='select') input.type=type;
+    if(value!==undefined) input.value=value;
+    wrap.append(input); return {wrap,input};
+  }
+  function editColors(module) {
+    dialogBody.replaceChildren();
+    dialogBody.append(el('p','editor-hint',
+      'As cores afetam somente este módulo. As linhas e a caixa de edição acompanham sua identidade visual.'));
+    const grid=el('div','form-grid'),inputs={};
+    const labels={bg1:'Fundo — início do gradiente',bg2:'Fundo — fim do gradiente',accent:'Borda, destaque e detalhes',text:'Texto principal',muted:'Texto secundário'};
+    Object.entries(labels).forEach(([key,label])=>{
+      const f=formField(label,'color',module.colors[key]);
+      grid.append(f.wrap); inputs[key]=f.input;
+    });
+    dialogBody.append(grid);
+    openDialog('🎨 Cores do módulo',module,()=>{
+      Object.keys(inputs).forEach(k=>module.colors[k]=inputs[k].value);
+      closeDialog(); commit();
+    });
+  }
+  function findContainer(id,items=state.sections) {
+    for(const m of items) {
+      if(m.id===id) return items;
+      if(m.modules) { const found=findContainer(id,m.modules); if(found) return found; }
+    }
+    return null;
+  }
+  function newModule(type,title,colors) {
+    const m={id:uid(),type,title,colors:{...colors},extra:[]};
+    if(type==='list') Object.assign(m,{
+      emoji:'📌',badge:'Nova prioridade',description:'Descrição do módulo',rows:[{num:'1',name:'Nova linha'}]
+    });
+    if(type==='phase') Object.assign(m,{period:'Definir período',count:'0',label:'Descrição do quadro'});
+    if(type==='tips') m.rows=[{lead:'Nova regra:',text:' Edite este texto'}];
+    if(type==='table') Object.assign(m,{
+      headers:['#','Projeto','Impacto','Confiança','Facilidade','Score','Visual'],
+      rows:[{num:'1',name:'Novo projeto',imp:3,conf:3,fac:3,scoreOverride:'',visualOverride:''}]
+    });
+    if(type==='board') m.modules=[];
+    return m;
+  }
+  function creationMenu(context,board) {
+    dialogBody.replaceChildren();
+    const grid=el('div','form-grid');
+    const title=formField('Título','text',board?'Novo quadro':'Novo módulo');
+    const type=formField('Formato','select');
+    [
+      ['list','Módulo com lista de projetos'],
+      ['phase','Quadro compacto / fase'],
+      ['table','Tabela ICE'],
+      ['tips','Lista de regras'],
+      ['board','Quadro com módulos internos']
+    ].forEach(([value,label])=>type.input.append(new Option(label,value)));
+    type.input.value=board?'board':'list';
+    const location=formField('Local de inserção','select');
+    location.input.append(new Option('Ao final da página','page'));
+    if(context) {
+      location.input.append(new Option('Após o módulo atual','after'));
+      if(context.modules) location.input.append(new Option('Dentro deste quadro','inside'));
+      location.input.value=context.modules?'inside':'after';
+    }
+    grid.append(title.wrap,type.wrap,location.wrap); dialogBody.append(grid);
+    openDialog(board?'＋ Criar quadro':'＋ Criar módulo',context,()=>{
+      const m=newModule(type.input.value,title.input.value||'Novo módulo',
+        context?.colors||palette('#1e293b','#172554','#6366f1'));
+      const where=location.input.value;
+      if(where==='inside') context.modules.push(m);
+      else if(where==='after') {
+        const container=findContainer(context.id);
+        container.splice(container.findIndex(x=>x.id===context.id)+1,0,m);
+      } else state.sections.push(m);
+      closeDialog(); commit();
+    });
+  }
+  function addLine(module) {
+    let target;
+    if(module.type==='list') {
+      const nums=module.rows.map(r=>Number(r.num)).filter(Number.isFinite);
+      target={num:String(Math.max(0,...nums)+1),name:'Nova linha'};
+      module.rows.push(target);
+    } else if(module.type==='table') {
+      target={num:String(module.rows.length+1),name:'Novo projeto',imp:3,conf:3,fac:3,scoreOverride:'',visualOverride:''};
+      module.rows.push(target);
+    } else if(module.type==='tips') {
+      target={lead:'Nova regra:',text:' Edite este texto'}; module.rows.push(target);
+    } else {
+      target={text:'Nova linha — clique em EDIT para editar'};
+      module.extra.push(target);
+    }
+    persist(); render(); toast('＋ Linha adicionada');
+    // Abre imediatamente a nova linha, mantendo-a adicionada mesmo se a edição for cancelada.
+    const entry=refs.findIndex(r=>r.object===target);
+    const span=site.querySelector('[data-ref="'+entry+'"]');
+    const source=span?.closest('.editable');
+    if(source) editLine(source,module);
+  }
+
+  function collectRows(data) {
+    const result=[];
+    result.push(['Página','Título',data.page.title],['Página','Subtítulo',data.page.subtitle]);
+    function visit(m,path) {
+      const label=path+(m.title?'/'+m.title:'');
+      if(m.type!=='matrix') {
+        ['title','emoji','badge','description','period','count','label'].forEach(k=>{
+          if(m[k]!==undefined) result.push([label,k,m[k]]);
+        });
+        Object.entries(m.colors||{}).forEach(([k,v])=>result.push([label,'cor:'+k,v]));
+      }
+      (m.headers||[]).forEach((v,i)=>result.push([label,'cabeçalho '+(i+1),v]));
+      (m.rows||[]).forEach((r,i)=>{
+        Object.entries(r).forEach(([k,v])=>result.push([label,'linha '+(i+1)+' / '+k,v]));
+        if(m.type==='table') {
+          result.push([label,'linha '+(i+1)+' / score calculado',scoreValue(r).toFixed(1)]);
+        }
+      });
+      (m.extra||[]).forEach((r,i)=>result.push([label,'linha extra '+(i+1),r.text]));
+      (m.modules||[]).forEach(child=>visit(child,label));
+    }
+    data.sections.forEach(s=>visit(s,''));
+    return result;
+  }
+  function triggerDownload(content,filename,mime) {
+    const blob=new Blob([content],{type:mime+';charset=utf-8'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url; a.download=filename; document.body.append(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('⬇ Arquivo preparado: '+filename);
+  }
+  function exportData(format,module=null) {
+    const data=module
+      ? {version:1,storageId:uid(),page:{title:module.title||'Módulo exportado',subtitle:'Módulo exportado da matriz de priorização'},sections:[module]}
+      : state;
+    const filename=module?'modulo-priorizacao':'projetos-priorizacao';
+    if(format==='json') return triggerDownload(JSON.stringify(data,null,2),filename+'.json','application/json');
+    const rows=collectRows(data);
+    if(format==='csv') {
+      // Escapa aspas e neutraliza fórmulas ao abrir em planilhas.
+      const csvCell=v=>{
+        let text=String(v??'');
+        if(/^\s*[=+\-@]/.test(text)) text="'"+text;
+        return '"'+text.replace(/"/g,'""')+'"';
+      };
+      const csv='\uFEFF'+[['Módulo','Campo','Valor'],...rows].map(r=>r.map(csvCell).join(';')).join('\r\n');
+      return triggerDownload(csv,filename+'.csv','text/csv');
+    }
+    if(format==='txt') return triggerDownload(rows.map(r=>r.join(' | ')).join('\n'),filename+'.txt','text/plain');
+    if(format==='html') {
+      const snapshot=structuredClone(data);
+      snapshot.storageId=uid(); // Não confunde o novo HTML com versões anteriores.
+      const doc=document.documentElement.cloneNode(true);
+      doc.querySelector('#embedded-state').textContent=JSON.stringify(snapshot).replace(/</g,'\\u003c');
+      doc.querySelector('#site').replaceChildren();
+      doc.querySelector('#page-header').replaceChildren();
+      doc.querySelector('#editor').removeAttribute('open');
+      doc.querySelector('#editor').removeAttribute('style');
+      doc.querySelector('#dialog-body').replaceChildren();
+      doc.querySelector('#dialog-error').textContent='';
+      doc.querySelector('#toast').classList.remove('show');
+      triggerDownload('<!DOCTYPE html>\n'+doc.outerHTML,filename+'.html','text/html');
+    }
+  }
+  function downloadMenu(module) {
+    dialogBody.replaceChildren();
+    dialogBody.append(el('p','editor-hint',
+      'Baixe somente este módulo, incluindo seus textos, cores, linhas e módulos internos.'));
+    const buttons=el('div','download-bar');
+    ['json','csv','txt','html'].forEach(format=>{
+      buttons.append(button('⬇ '+format.toUpperCase(),()=>{
+        exportData(format,module); closeDialog();
+      },'btn-'+format));
+    });
+    dialogBody.append(buttons);
+    openDialog('⬇ Baixar módulo',module,null);
+  }
+
+  // Valida importações antes de substituir os dados atuais.
+  function validateState(data) {
+    if(!data||data.version!==1||!data.page||typeof data.page.title!=='string'||
+      typeof data.page.subtitle!=='string'||!Array.isArray(data.sections))
+      throw new Error('JSON incompatível. Use um arquivo exportado por este editor.');
+    const allowed=['matrix','timeline','board','list','phase','table','tips'];
+    const ids=new Set(); let count=0;
+    const string=(v)=>{ if(typeof v!=='string') throw new Error('Campo de texto inválido.'); };
+    function visit(m,depth=0) {
+      if(!m||!allowed.includes(m.type)||depth>12||++count>2000) throw new Error('Estrutura de módulos inválida.');
+      if(typeof m.id!=='string'||ids.has(m.id)) throw new Error('Identificador de módulo inválido ou duplicado.');
+      ids.add(m.id);
+      if(m.type==='matrix') {
+        if(!Array.isArray(m.modules)) throw new Error('Matriz inválida.');
+        m.modules.forEach(x=>visit(x,depth+1)); return;
+      }
+      string(m.title);
+      if(!m.colors) throw new Error('Cores ausentes.');
+      ['bg1','bg2','accent','text','muted'].forEach(k=>{
+        if(!/^#[0-9a-f]{6}$/i.test(m.colors[k])) throw new Error('Cor inválida.');
+      });
+      if(!Array.isArray(m.extra)) throw new Error('Linhas extras inválidas.');
+      m.extra.forEach(r=>string(r.text));
+      if(['board','timeline'].includes(m.type)) {
+        if(!Array.isArray(m.modules)) throw new Error('Quadro inválido.');
+        m.modules.forEach(x=>visit(x,depth+1));
+      }
+      if(m.type==='phase') ['period','count','label'].forEach(k=>string(m[k]));
+      if(['list','tips','table'].includes(m.type)) {
+        if(!Array.isArray(m.rows)||m.rows.length>10000) throw new Error('Lista de linhas inválida.');
+        if(m.type==='list') {
+          ['emoji','badge','description'].forEach(k=>string(m[k]));
+          m.rows.forEach(r=>{ string(r.num); string(r.name); });
+        }
+        if(m.type==='tips') m.rows.forEach(r=>{string(r.lead);string(r.text);});
+        if(m.type==='table') {
+          if(!Array.isArray(m.headers)||m.headers.length!==7) throw new Error('Cabeçalhos inválidos.');
+          m.headers.forEach(string);
+          m.rows.forEach(r=>{
+            string(r.num); string(r.name);
+            ['imp','conf','fac'].forEach(k=>{
+              if(typeof r[k]!=='number'||!Number.isFinite(r[k])||r[k]<1||r[k]>5) throw new Error('Nota ICE inválida.');
+            });
+            if(r.scoreOverride!==''&&(!Number.isFinite(Number(r.scoreOverride))||Number(r.scoreOverride)<1||Number(r.scoreOverride)>5))
+              throw new Error('Score inválido.');
+            if(r.visualOverride!==''&&(!Number.isFinite(Number(r.visualOverride))||Number(r.visualOverride)<0||Number(r.visualOverride)>100))
+              throw new Error('Visual inválido.');
+          });
+        }
+      }
+    }
+    data.sections.forEach(m=>visit(m));
+  }
+  document.querySelectorAll('[data-export]').forEach(b=>{
+    b.addEventListener('click',()=>exportData(b.dataset.export));
+  });
+  document.getElementById('global-add').addEventListener('click',()=>creationMenu(null,false));
+  const importInput=document.getElementById('import-file');
+  document.getElementById('import-btn').addEventListener('click',()=>importInput.click());
+  importInput.addEventListener('change',async()=>{
+    const file=importInput.files[0]; if(!file) return;
+    try {
+      if(file.size>10000000) throw new Error('Arquivo muito grande: limite de 10 MB.');
+      const imported=JSON.parse(await file.text()); validateState(imported);
+      if(!confirm('Importar substituirá a matriz atual. Baixe uma cópia antes, se necessário. Continuar?')) return;
+      imported.storageId=state.storageId;
+      state=imported; commit();
+    } catch(e) { toast('⚠ '+e.message); }
+    finally { importInput.value=''; }
+  });
+
+  render();
+  // Salva a identidade inicial para que o mesmo arquivo continue a usar o mesmo estado.
+  // Para a página inicial sem estado embutido, usa uma chave estável por endereço.
+  if(document.getElementById('embedded-state').textContent.trim()==='null') {
+    const stableKey='priority-editor-current-'+location.pathname;
+    try {
+      const lastId=localStorage.getItem(stableKey);
+      if(lastId) {
+        const raw=localStorage.getItem('priority-editor-v1-'+lastId);
+        if(raw) { const parsed=JSON.parse(raw); validateState(parsed); state=parsed; render(); }
+      }
+      localStorage.setItem(stableKey,state.storageId);
+    } catch {}
+  }
+  persist();
+})();
+</script>
+</body>
+</html>
